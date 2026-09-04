@@ -42,7 +42,7 @@ export interface ShopRoute {
 
 /**
  * Everything the phone page needs to paint the kiosk white card.
- * Strings are already in the visitor's language — no API re-fetch.
+ * Text/address/photos: GET /api/shops/{id}. Route stop names: /api/shop-route.
  */
 export interface DetailPayload {
   v: 1;
@@ -51,7 +51,6 @@ export interface DetailPayload {
   shopId?: number;
   name: string;
   category: string;
-  /** Up to 4 image URLs (may be omitted if QR would be too large). */
   photos: string[];
   address: string;
   hours: string;
