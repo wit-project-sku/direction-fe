@@ -1,0 +1,71 @@
+.page {
+  --kiosk-primary: #ff7f0f;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: 8px 0 0;
+  background: #e8e8e8;
+  color: #222;
+  font-family:
+    'Pretendard',
+    'Noto Sans KR',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.main {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.stage {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.scale {
+  width: 1820px;
+  transform-origin: top center;
+  flex: 0 0 auto;
+}
+
+.bottom {
+  max-width: 640px;
+  width: 100%;
+  margin: 8px auto 0;
+  padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.saveBtn {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--kiosk-primary);
+  cursor: pointer;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.status {
+  margin: 48px 16px;
+  text-align: center;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.demoLink {
+  color: var(--kiosk-primary);
+  font-weight: 600;
+}
