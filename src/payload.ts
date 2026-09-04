@@ -47,8 +47,13 @@ function normalizeLegacy(data: DetailPayload): DetailPayload | null {
 /**
  * Compact `r` query from kiosk (ASCII). Mirror of encodeRouteParam.
  * Example: 36.7,56,b40,p90,t52,3008,20,40,w3
+ *
+ * Optional `bn` / `an` supply boarding / alight stop names (already localized).
  */
-export function parseRouteParam(raw: string | null): ShopRoute | null {
+export function parseRouteParam(
+  raw: string | null,
+  names?: { bn?: string | null; an?: string | null },
+): ShopRoute | null {
   if (!raw) return null;
   const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
   if (parts.length < 2) return null;
@@ -95,7 +100,7 @@ export function parseRouteParam(raw: string | null): ShopRoute | null {
       if (Number.isFinite(rideStops) && Number.isFinite(rideMin)) {
         legs.push({
           routeNum: p,
-          boardStopNameKr: legs.length === 0 ? '승차' : '환승',
+          boardStopNameKr: '',
           rideStops,
           rideMin,
         });
@@ -107,6 +112,16 @@ export function parseRouteParam(raw: string | null): ShopRoute | null {
     i += 1;
   }
 
+  const boardNames = (names?.bn ?? '')
+    .split('|')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  legs.forEach((leg, i) => {
+    leg.boardStopNameKr = boardNames[i] || leg.routeNum;
+  });
+
+  const alight = (names?.an ?? '').trim();
+
   return {
     distanceKm,
     durationMin: Number.isFinite(durationMin) ? durationMin : null,
@@ -116,7 +131,10 @@ export function parseRouteParam(raw: string | null): ShopRoute | null {
       totalMin != null
         ? { status: 'FOUND', totalMin, legs }
         : null,
-    busStop: busWalk != null ? { nameKr: '하차', walkMin: busWalk } : null,
+    busStop:
+      alight || busWalk != null
+        ? { nameKr: alight, walkMin: busWalk }
+        : null,
   };
 }
 
@@ -135,7 +153,7 @@ export async function loadDetailFromLocation(
   const hash = loc.hash.replace(/^#/, '').trim();
 
   if (Number.isFinite(id) && id > 0) {
-    let route = parseRouteParam(q.get('r'));
+    let route = parseRouteParam(q.get('r'), { bn: q.get('bn'), an: q.get('an') });
     let showShuttle: boolean | undefined = q.get('s') === '1' ? true : undefined;
     let showFerry: boolean | undefined = q.get('f') === '1' ? true : undefined;
     let ferryModeLabel = q.get('fl')?.trim() || undefined;
@@ -218,6 +236,9 @@ export function demoPayload(): DetailPayload {
     description: '협재해수욕장 인근의 갈치 전문점.',
     tags: '#갈치도 #협재맛집',
     showShuttle: false,
-    route: parseRouteParam('36.7,56,t52,3008,20,40,w3'),
+    route: parseRouteParam('36.7,56,t52,3008,20,40,w3', {
+      bn: '제주국제공항',
+      an: '협재해수욕장',
+    }),
   };
 }
