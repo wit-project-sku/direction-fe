@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from 'react';
 import { toPng } from 'html-to-image';
 import { DetailCard } from './DetailCard';
-import { demoPayload, readPayloadFromLocation } from './payload';
+import { demoPayload, loadDetailFromLocation } from './payload';
 import type { DetailPayload, Lang } from './types';
 import styles from './App.module.css';
 
@@ -25,6 +25,16 @@ const COPY = {
     th: 'กำลังบันทึก…',
     ru: 'Сохранение…',
     id: 'Menyimpan…',
+  },
+  loading: {
+    ko: '불러오는 중…',
+    en: 'Loading…',
+    ja: '読み込み中…',
+    zh: '加载中…',
+    vi: 'Đang tải…',
+    th: 'กำลังโหลด…',
+    ru: 'Загрузка…',
+    id: 'Memuat…',
   },
   missing: {
     ko: '키오스크 QR로 열어 주세요. (상세 데이터가 없습니다)',
@@ -144,6 +154,7 @@ const CARD_WIDTH = 1820;
 
 export default function App(): ReactElement {
   const [payload, setPayload] = useState<DetailPayload | null>(null);
+  const [loading, setLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [saving, setSaving] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
@@ -153,9 +164,21 @@ export default function App(): ReactElement {
     const q = new URLSearchParams(window.location.search);
     if (q.get('demo') === '1') {
       setPayload(demoPayload());
+      setLoading(false);
       return;
     }
-    void readPayloadFromLocation().then(setPayload);
+    let cancelled = false;
+    setLoading(true);
+    void loadDetailFromLocation()
+      .then((p) => {
+        if (!cancelled) setPayload(p);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -227,7 +250,9 @@ export default function App(): ReactElement {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        {!payload ? (
+        {loading ? (
+          <p className={styles.status}>{pick(COPY.loading, lang)}</p>
+        ) : !payload ? (
           <p className={styles.status}>
             {pick(COPY.missing, lang)}
             <br />
@@ -248,7 +273,7 @@ export default function App(): ReactElement {
         <button
           type="button"
           className={styles.saveBtn}
-          disabled={!payload || saving}
+          disabled={!payload || saving || loading}
           onClick={() => void saveImage()}
         >
           {saving ? pick(COPY.saving, lang) : pick(COPY.save, lang)}

@@ -1,4 +1,5 @@
-import type { DetailPayload, Lang } from './types';
+import type { DetailPayload, Lang, ShopRoute } from './types';
+import { fetchShopById, parseLang, shopToDetailFields } from './shopApi';
 
 const LANGS: Lang[] = ['ko', 'en', 'ja', 'zh', 'vi', 'th', 'ru', 'id'];
 
@@ -11,7 +12,25 @@ function fromBase64Url(encoded: string): Uint8Array {
   return bytes;
 }
 
-function normalizePayload(data: DetailPayload): DetailPayload | null {
+async function inflateZlib(bytes: Uint8Array): Promise<string> {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Response(stream).text();
+}
+
+async function decodeHashJson(encoded: string): Promise<unknown | null> {
+  try {
+    const raw = encoded.trim();
+    if (!raw) return null;
+    const json = raw.startsWith('z')
+      ? await inflateZlib(fromBase64Url(raw.slice(1)))
+      : new TextDecoder().decode(fromBase64Url(raw));
+    return JSON.parse(json) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLegacy(data: DetailPayload): DetailPayload | null {
   if (data?.v !== 1 || typeof data.name !== 'string') return null;
   if (!LANGS.includes(data.lang)) data.lang = 'ko';
   if (!Array.isArray(data.photos)) data.photos = [];
@@ -25,57 +44,96 @@ function normalizePayload(data: DetailPayload): DetailPayload | null {
   return data;
 }
 
-async function inflateZlib(bytes: Uint8Array): Promise<string> {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
-  return new Response(stream).text();
+interface RouteHashV2 {
+  v: 2;
+  r?: ShopRoute | null;
+  s?: boolean;
+  f?: boolean;
+  fl?: string;
 }
 
-/** Sync encode for demos — prefers uncompressed for simplicity in tooling. */
-export function encodePayload(payload: DetailPayload): string {
-  const json = JSON.stringify(payload);
-  const bytes = new TextEncoder().encode(json);
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]!);
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function isRouteHashV2(data: unknown): data is RouteHashV2 {
+  return Boolean(data && typeof data === 'object' && (data as RouteHashV2).v === 2);
 }
 
 /**
- * Decode kiosk QR hash.
- * - `z…` = zlib(compact JSON) from kiosk
- * - otherwise legacy uncompressed base64url JSON
+ * Load detail for the phone page:
+ * 1) `?id=&lang=&from=` + optional `#z` route hash (v2) — preferred short QR
+ * 2) legacy full payload in hash (v1)
  */
-export async function decodePayload(encoded: string): Promise<DetailPayload | null> {
-  try {
-    const raw = encoded.trim();
-    if (!raw) return null;
-
-    let json: string;
-    if (raw.startsWith('z')) {
-      json = await inflateZlib(fromBase64Url(raw.slice(1)));
-    } else {
-      json = new TextDecoder().decode(fromBase64Url(raw));
-    }
-    return normalizePayload(JSON.parse(json) as DetailPayload);
-  } catch {
-    return null;
-  }
-}
-
-export function buildDetailUrl(baseUrl: string, payload: DetailPayload): string {
-  const root = baseUrl.replace(/\/+$/, '');
-  return `${root}/#${encodePayload(payload)}`;
-}
-
-export async function readPayloadFromLocation(
+export async function loadDetailFromLocation(
   loc: Location = window.location,
 ): Promise<DetailPayload | null> {
+  const q = new URLSearchParams(loc.search);
+  const idRaw = q.get('id');
+  const id = idRaw ? Number(idRaw) : NaN;
+  const lang = parseLang(q.get('lang'));
+  const from = q.get('from')?.trim() || 'eat';
   const hash = loc.hash.replace(/^#/, '').trim();
-  if (hash) {
-    const fromHash = await decodePayload(hash);
-    if (fromHash) return fromHash;
+
+  // Preferred: shop id query → fetch photos/text; hash = route only.
+  if (Number.isFinite(id) && id > 0) {
+    let route: ShopRoute | null = null;
+    let showShuttle: boolean | undefined;
+    let showFerry: boolean | undefined;
+    let ferryModeLabel: string | undefined;
+
+    if (hash) {
+      const decoded = await decodeHashJson(hash);
+      if (isRouteHashV2(decoded)) {
+        route = decoded.r ?? null;
+        showShuttle = decoded.s || undefined;
+        showFerry = decoded.f || undefined;
+        ferryModeLabel = decoded.fl || undefined;
+      } else if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
+        // Old full payload accidentally opened with ?id= — still use its route.
+        const legacy = normalizeLegacy(decoded as DetailPayload);
+        if (legacy) {
+          route = legacy.route ?? null;
+          showShuttle = legacy.showShuttle;
+          showFerry = legacy.showFerry;
+          ferryModeLabel = legacy.ferryModeLabel;
+        }
+      }
+    }
+
+    try {
+      const shop = await fetchShopById(id);
+      const fields = shopToDetailFields(shop, lang);
+      // Detail API returns route:null — prefer QR route; fall back to API if present.
+      const apiRoute =
+        shop.route && typeof shop.route.distanceKm === 'number' ? shop.route : null;
+      return {
+        v: 1,
+        lang,
+        from,
+        ...fields,
+        showShuttle,
+        showFerry,
+        ferryModeLabel,
+        route: route ?? apiRoute,
+      };
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
-  const d = new URLSearchParams(loc.search).get('d');
-  if (d) return decodePayload(d);
+
+  // Legacy: full card in hash / ?d=
+  if (hash) {
+    const decoded = await decodeHashJson(hash);
+    if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
+      return normalizeLegacy(decoded as DetailPayload);
+    }
+  }
+  const d = q.get('d');
+  if (d) {
+    const decoded = await decodeHashJson(d);
+    if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
+      return normalizeLegacy(decoded as DetailPayload);
+    }
+  }
+
   return null;
 }
 
@@ -84,38 +142,37 @@ export function demoPayload(): DetailPayload {
     v: 1,
     lang: 'ko',
     from: 'eat',
-    shopId: 1308,
-    name: '돈사돈',
-    category: '흑돼지',
+    shopId: 1612,
+    name: '제주 갈치도 협재해수욕장점',
+    category: '갈치·고등어',
     photos: [],
-    address: '제주특별자치도 제주시 연동',
+    address: '제주특별자치도 제주시 한림읍 한림로 475',
     hours: '11:00 - 22:00',
     phone: '064-123-4567',
-    description: '제주 흑돼지 전문점입니다.',
-    tags: '#흑돼지 #연동',
+    description: '협재해수욕장 인근의 갈치 전문점.',
+    tags: '#갈치도 #협재맛집',
     showShuttle: false,
     route: {
-      distanceKm: 3.1,
-      durationMin: 12,
-      guideType: 'ROAD',
-      bikeMin: 25,
-      walkMin: 45,
+      distanceKm: 36.7,
+      durationMin: 56,
+      bikeMin: 120,
+      walkMin: 400,
       transit: {
         status: 'FOUND',
-        totalMin: 28,
+        totalMin: 90,
         basedOn: '2026-03',
         legs: [
           {
-            routeNum: '365',
+            routeNum: '202',
             boardStopNameKr: '제주국제공항',
-            rideStops: 8,
-            rideMin: 18,
+            rideStops: 20,
+            rideMin: 70,
           },
         ],
       },
       busStop: {
-        nameKr: '연동입구',
-        walkMin: 7,
+        nameKr: '협재해수욕장',
+        walkMin: 8,
       },
     },
   };

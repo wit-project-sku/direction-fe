@@ -5,10 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
-    // Browser calls to api-v3 are CORS-blocked (403). Proxy through Vite in dev.
+    // Browser → api-v3 is CORS-blocked; proxy same-origin /api in dev.
     proxy: {
       '/api': {
-        target: 'https://api-v3.witteria.com',
+        target: 'https://api-stage-v3.witteria.com',
         changeOrigin: true,
         secure: true,
       },
