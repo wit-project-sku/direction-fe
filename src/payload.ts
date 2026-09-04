@@ -136,8 +136,8 @@ export async function loadDetailFromLocation(
 
   if (Number.isFinite(id) && id > 0) {
     let route = parseRouteParam(q.get('r'));
-    let showShuttle = q.get('s') === '1' || undefined;
-    let showFerry = q.get('f') === '1' || undefined;
+    let showShuttle: boolean | undefined = q.get('s') === '1' ? true : undefined;
+    let showFerry: boolean | undefined = q.get('f') === '1' ? true : undefined;
     let ferryModeLabel = q.get('fl')?.trim() || undefined;
 
     // Legacy route-only hash (v2) if `r` query missing.
@@ -151,15 +151,15 @@ export async function loadDetailFromLocation(
           fl?: string;
         };
         route = v2.r ?? null;
-        showShuttle = showShuttle || v2.s || undefined;
-        showFerry = showFerry || v2.f || undefined;
+        if (v2.s) showShuttle = true;
+        if (v2.f) showFerry = true;
         ferryModeLabel = ferryModeLabel || v2.fl || undefined;
       } else if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
         const legacy = normalizeLegacy(decoded as DetailPayload);
         if (legacy) {
           route = legacy.route ?? null;
-          showShuttle = showShuttle || legacy.showShuttle;
-          showFerry = showFerry || legacy.showFerry;
+          if (legacy.showShuttle) showShuttle = true;
+          if (legacy.showFerry) showFerry = true;
           ferryModeLabel = ferryModeLabel || legacy.ferryModeLabel;
         }
       }
