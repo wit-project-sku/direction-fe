@@ -1,5 +1,5 @@
 import type { DetailPayload, Lang, ShopRoute, ShopTransitLeg } from './types';
-import { fetchShopById, parseLang, shopToDetailFields } from './shopApi';
+import { fetchShopById, fetchShopRoute, parseLang, shopToDetailFields } from './shopApi';
 
 const LANGS: Lang[] = ['ko', 'en', 'ja', 'zh', 'vi', 'th', 'ru', 'id'];
 
@@ -186,8 +186,17 @@ export async function loadDetailFromLocation(
     try {
       const shop = await fetchShopById(id);
       const fields = shopToDetailFields(shop, lang);
-      const apiRoute =
+      const compactRoute = route;
+      const detailRoute =
         shop.route && typeof shop.route.distanceKm === 'number' ? shop.route : null;
+
+      // Prefer list route (has stop names). Compact `r` is numbers-only fallback.
+      let richRoute: ShopRoute | null = null;
+      const kioskId = typeof shop.kioskId === 'number' ? shop.kioskId : NaN;
+      if (Number.isFinite(kioskId) && kioskId > 0) {
+        richRoute = await fetchShopRoute(id, kioskId);
+      }
+
       return {
         v: 1,
         lang,
@@ -196,7 +205,7 @@ export async function loadDetailFromLocation(
         showShuttle,
         showFerry,
         ferryModeLabel,
-        route: route ?? apiRoute,
+        route: richRoute ?? detailRoute ?? compactRoute,
       };
     } catch (e) {
       console.error(e);

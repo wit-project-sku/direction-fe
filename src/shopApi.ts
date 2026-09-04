@@ -24,6 +24,7 @@ interface ShopImage {
 /** Raw shape from GET /api/shops/{id} (multilingual fields). */
 export interface ApiShop {
   id: number;
+  kioskId?: number;
   tel?: string | null;
   openTime?: string | null;
   images?: ShopImage[] | null;
@@ -73,7 +74,11 @@ export interface ApiShop {
 
 interface ApiEnvelope {
   success?: boolean;
-  data?: ApiShop;
+  data?: ApiShop | ApiShop[];
+}
+
+function isApiShop(v: unknown): v is ApiShop {
+  return Boolean(v && typeof v === 'object' && typeof (v as ApiShop).id === 'number');
 }
 
 function field(shop: ApiShop, base: string, lang: Lang): string {
@@ -121,11 +126,54 @@ export async function fetchShopById(id: number): Promise<ApiShop> {
     headers: { Accept: 'application/json' },
   });
   if (!res.ok) throw new Error(`shop ${id}: HTTP ${res.status}`);
-  const body = (await res.json()) as ApiEnvelope & ApiShop;
-  const shop: ApiShop =
-    body && typeof body === 'object' && body.data && typeof body.data.id === 'number'
-      ? body.data
-      : body;
-  if (!shop || typeof shop.id !== 'number') throw new Error(`shop ${id}: bad body`);
+  const body = (await res.json()) as ApiEnvelope | ApiShop;
+  const shop: ApiShop = isApiShop(body)
+    ? body
+    : isApiShop((body as ApiEnvelope).data)
+      ? ((body as ApiEnvelope).data as ApiShop)
+      : (() => {
+          throw new Error(`shop ${id}: bad body`);
+        })();
   return shop;
+}
+
+/**
+ * Full route (with stop names) from the shops list via serverless/cache.
+ * Detail endpoint returns route:null.
+ */
+export async function fetchShopRoute(
+  id: number,
+  kioskId: number,
+): Promise<ShopRoute | null> {
+  try {
+    const res = await fetch(`/api/shop-route?id=${id}&kioskId=${kioskId}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const body = (await res.json()) as { route?: ShopRoute | null };
+      return body.route ?? null;
+    }
+  } catch (e) {
+    console.warn('shop-route endpoint failed', e);
+  }
+
+  // Local Vite: no serverless — pull from proxied list once (dev only).
+  try {
+    const res = await fetch(`/api/shops?kioskId=${kioskId}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const body: unknown = await res.json();
+    let list: ApiShop[] = [];
+    if (Array.isArray(body)) {
+      list = body as ApiShop[];
+    } else if (body && typeof body === 'object' && Array.isArray((body as ApiEnvelope).data)) {
+      list = (body as ApiEnvelope).data as ApiShop[];
+    }
+    const shop = list.find((s) => s.id === id);
+    return shop?.route && typeof shop.route.distanceKm === 'number' ? shop.route : null;
+  } catch (e) {
+    console.warn('shops list route fallback failed', e);
+    return null;
+  }
 }
