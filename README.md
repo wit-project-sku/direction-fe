@@ -1,38 +1,18 @@
 # direction-fe
 
-제주 키오스크 **흰 상세 카드**를 폰에서 그대로 보고 이미지로 저장하는 페이지.
+제주 키오스크 **흰 상세 카드**를 폰에서 보고 이미지로 저장하는 페이지.
 
-## 데이터 방식 (중요)
-
-가는 방법(`route`)은 `/api/shops` 목록에만 있으므로, **키오스크가 이미 가진 표시용 텍스트·route를 QR에 실어 보냅니다.**
+## QR URL (짧게)
 
 ```
-https://{host}/#{base64url(JSON payload)}
+https://{host}/?id={shopId}&lang=ko&from=eat#z{zlib(route-only)}
 ```
 
-로컬 데모:
+- 쿼리 `id` → 웹이 `GET /api/shops/{id}`로 **사진·이름·주소·전화** 조회 (Vercel/Vite `/api` 프록시)
+- 해시 → **가는 방법(route)** 만 (상세 API의 `route`는 null)
 
-```
-http://localhost:5174/?demo=1
-```
-
-## Payload (`DetailPayload`)
-
-키오스크에서 **이미 언어가 정해진 문자열** + `route` 객체:
-
-- `name`, `category`, `photos[]`, `address`, `hours`, `phone`
-- `description`, `tags` (rating 제외)
-- `showShuttle`, `showFerry`, `ferryModeLabel`
-- `route` (distanceKm, durationMin, transit, busStop, …)
-- `lang`, `from`, `shopId?`
-
-인코딩: `src/payload.ts` → `encodePayload` / `buildDetailUrl`  
-키오스크: `src/renderer/src/lib/detailCardSave.ts` (동일 인코딩)
-
-## UI
-
-키오스크 `JejuSpotDetailCard` + `JejuAirportDirections`와 **같은 1820px 카드 비율**을  
-폰 폭에 `scale`로 맞춰 보여 줍니다.
+로컬 데모: `http://localhost:5174/?demo=1`  
+실데이터: `http://localhost:5174/?id=1612&lang=ko`
 
 ## 개발
 
@@ -41,7 +21,7 @@ npm install
 npm run dev
 ```
 
-## 키오스크 쪽
+## Vercel
 
-QR value = `buildDetailCardSaveUrl(payload)`  
-가는 방법 패널 옆에 작은 QR로 노출하면 됩니다.
+`vercel.json`이 `/api/*` → `api-stage-v3.witteria.com` 으로 프록시합니다.  
+키오스크 `.env`: `VITE_DETAIL_SAVE_ORIGIN=https://direction-fe.vercel.app`
