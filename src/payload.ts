@@ -2,7 +2,35 @@ import type { DetailPayload, Lang } from './types';
 
 const LANGS: Lang[] = ['ko', 'en', 'ja', 'zh', 'vi', 'th', 'ru', 'id'];
 
-/** UTF-8 JSON → base64url (no compression — keep in sync with kiosk detailCardSave). */
+function fromBase64Url(encoded: string): Uint8Array {
+  const pad = encoded.length % 4 === 0 ? '' : '='.repeat(4 - (encoded.length % 4));
+  const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/') + pad;
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function normalizePayload(data: DetailPayload): DetailPayload | null {
+  if (data?.v !== 1 || typeof data.name !== 'string') return null;
+  if (!LANGS.includes(data.lang)) data.lang = 'ko';
+  if (!Array.isArray(data.photos)) data.photos = [];
+  if (typeof data.category !== 'string') data.category = '';
+  if (typeof data.address !== 'string') data.address = '';
+  if (typeof data.hours !== 'string') data.hours = '';
+  if (typeof data.phone !== 'string') data.phone = '';
+  if (typeof data.description !== 'string') data.description = '';
+  if (typeof data.tags !== 'string') data.tags = '';
+  if (typeof data.from !== 'string') data.from = 'eat';
+  return data;
+}
+
+async function inflateZlib(bytes: Uint8Array): Promise<string> {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Response(stream).text();
+}
+
+/** Sync encode for demos — prefers uncompressed for simplicity in tooling. */
 export function encodePayload(payload: DetailPayload): string {
   const json = JSON.stringify(payload);
   const bytes = new TextEncoder().encode(json);
@@ -11,19 +39,23 @@ export function encodePayload(payload: DetailPayload): string {
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export function decodePayload(encoded: string): DetailPayload | null {
+/**
+ * Decode kiosk QR hash.
+ * - `z…` = zlib(compact JSON) from kiosk
+ * - otherwise legacy uncompressed base64url JSON
+ */
+export async function decodePayload(encoded: string): Promise<DetailPayload | null> {
   try {
-    const pad = encoded.length % 4 === 0 ? '' : '='.repeat(4 - (encoded.length % 4));
-    const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/') + pad;
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const json = new TextDecoder().decode(bytes);
-    const data = JSON.parse(json) as DetailPayload;
-    if (data?.v !== 1 || typeof data.name !== 'string') return null;
-    if (!LANGS.includes(data.lang)) data.lang = 'ko';
-    if (!Array.isArray(data.photos)) data.photos = [];
-    return data;
+    const raw = encoded.trim();
+    if (!raw) return null;
+
+    let json: string;
+    if (raw.startsWith('z')) {
+      json = await inflateZlib(fromBase64Url(raw.slice(1)));
+    } else {
+      json = new TextDecoder().decode(fromBase64Url(raw));
+    }
+    return normalizePayload(JSON.parse(json) as DetailPayload);
   } catch {
     return null;
   }
@@ -34,10 +66,12 @@ export function buildDetailUrl(baseUrl: string, payload: DetailPayload): string 
   return `${root}/#${encodePayload(payload)}`;
 }
 
-export function readPayloadFromLocation(loc: Location = window.location): DetailPayload | null {
+export async function readPayloadFromLocation(
+  loc: Location = window.location,
+): Promise<DetailPayload | null> {
   const hash = loc.hash.replace(/^#/, '').trim();
   if (hash) {
-    const fromHash = decodePayload(hash);
+    const fromHash = await decodePayload(hash);
     if (fromHash) return fromHash;
   }
   const d = new URLSearchParams(loc.search).get('d');

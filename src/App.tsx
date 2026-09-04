@@ -155,7 +155,7 @@ export default function App(): ReactElement {
       setPayload(demoPayload());
       return;
     }
-    setPayload(readPayloadFromLocation());
+    void readPayloadFromLocation().then(setPayload);
   }, []);
 
   useEffect(() => {

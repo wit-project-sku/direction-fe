@@ -12,9 +12,14 @@ export const DetailCard = forwardRef<HTMLElement, Props>(function DetailCard(
   ref,
 ): ReactElement {
   const isRentcar = payload.from === 'rentcar';
-  const photos = payload.photos.filter(Boolean).slice(0, 4);
+  const photos = (payload.photos ?? []).filter(Boolean).slice(0, 4);
   while (!isRentcar && photos.length < 4) photos.push('');
-  const hours = payload.hours.trim();
+  const hours = (payload.hours ?? '').trim();
+  const address = payload.address ?? '';
+  const phone = payload.phone ?? '';
+  const description = payload.description ?? '';
+  const tags = payload.tags ?? '';
+  const category = payload.category ?? '';
 
   const showDirections =
     Boolean(payload.showFerry && payload.ferryModeLabel) ||
@@ -27,10 +32,10 @@ export const DetailCard = forwardRef<HTMLElement, Props>(function DetailCard(
       <div className={styles.head}>
         <div className={styles.nameRow}>
           <p className={styles.name}>{payload.name}</p>
-          {payload.category ? (
+          {category ? (
             <span className={styles.cat}>
               <span className={styles.dot} />
-              {payload.category}
+              {category}
             </span>
           ) : null}
         </div>
@@ -49,12 +54,12 @@ export const DetailCard = forwardRef<HTMLElement, Props>(function DetailCard(
       <div className={styles.divider} />
 
       <div className={styles.infoList}>
-        {payload.address ? (
+        {address ? (
           <div className={styles.infoItem}>
             <span className={styles.infoIcon} aria-hidden>
               📍
             </span>
-            <p className={styles.infoText}>{payload.address}</p>
+            <p className={styles.infoText}>{address}</p>
           </div>
         ) : null}
         {hours ? (
@@ -65,21 +70,21 @@ export const DetailCard = forwardRef<HTMLElement, Props>(function DetailCard(
             <p className={styles.infoText}>{hours}</p>
           </div>
         ) : null}
-        {payload.phone ? (
+        {phone ? (
           <div className={styles.infoItem}>
             <span className={styles.infoIcon} aria-hidden>
               📞
             </span>
-            <p className={styles.infoText}>{payload.phone}</p>
+            <p className={styles.infoText}>{phone}</p>
           </div>
         ) : null}
       </div>
 
-      {!isRentcar && (payload.description || payload.tags) ? (
+      {!isRentcar && (description || tags) ? (
         <>
           <div className={styles.divider} />
-          {payload.description ? <p className={styles.desc}>{payload.description}</p> : null}
-          {payload.tags ? <p className={styles.tags}>{payload.tags}</p> : null}
+          {description ? <p className={styles.desc}>{description}</p> : null}
+          {tags ? <p className={styles.tags}>{tags}</p> : null}
         </>
       ) : null}
 
