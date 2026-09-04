@@ -1,4 +1,4 @@
-import type { DetailPayload, Lang, ShopRoute } from './types';
+import type { DetailPayload, Lang, ShopRoute, ShopTransitLeg } from './types';
 import { fetchShopById, parseLang, shopToDetailFields } from './shopApi';
 
 const LANGS: Lang[] = ['ko', 'en', 'ja', 'zh', 'vi', 'th', 'ru', 'id'];
@@ -44,22 +44,85 @@ function normalizeLegacy(data: DetailPayload): DetailPayload | null {
   return data;
 }
 
-interface RouteHashV2 {
-  v: 2;
-  r?: ShopRoute | null;
-  s?: boolean;
-  f?: boolean;
-  fl?: string;
-}
+/**
+ * Compact `r` query from kiosk (ASCII). Mirror of encodeRouteParam.
+ * Example: 36.7,56,b40,p90,t52,3008,20,40,w3
+ */
+export function parseRouteParam(raw: string | null): ShopRoute | null {
+  if (!raw) return null;
+  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
 
-function isRouteHashV2(data: unknown): data is RouteHashV2 {
-  return Boolean(data && typeof data === 'object' && (data as RouteHashV2).v === 2);
+  const distanceKm = Number(parts[0]);
+  const durationMin = Number(parts[1]);
+  if (!Number.isFinite(distanceKm)) return null;
+
+  let bikeMin: number | null = null;
+  let walkMin: number | null = null;
+  let busWalk: number | null = null;
+  let totalMin: number | null = null;
+  const legs: ShopTransitLeg[] = [];
+  let inTransit = false;
+
+  for (let i = 2; i < parts.length; ) {
+    const p = parts[i]!;
+
+    if (!inTransit && /^b\d+$/i.test(p)) {
+      bikeMin = Number(p.slice(1));
+      i += 1;
+      continue;
+    }
+    if (!inTransit && /^p\d+$/i.test(p)) {
+      walkMin = Number(p.slice(1));
+      i += 1;
+      continue;
+    }
+    if (/^t\d+$/i.test(p)) {
+      totalMin = Number(p.slice(1));
+      inTransit = true;
+      i += 1;
+      continue;
+    }
+    if (/^w\d+$/i.test(p)) {
+      busWalk = Number(p.slice(1));
+      i += 1;
+      continue;
+    }
+
+    if (inTransit && i + 2 < parts.length) {
+      const rideStops = Number(parts[i + 1]);
+      const rideMin = Number(parts[i + 2]);
+      if (Number.isFinite(rideStops) && Number.isFinite(rideMin)) {
+        legs.push({
+          routeNum: p,
+          boardStopNameKr: legs.length === 0 ? '승차' : '환승',
+          rideStops,
+          rideMin,
+        });
+        i += 3;
+        continue;
+      }
+    }
+
+    i += 1;
+  }
+
+  return {
+    distanceKm,
+    durationMin: Number.isFinite(durationMin) ? durationMin : null,
+    bikeMin,
+    walkMin,
+    transit:
+      totalMin != null
+        ? { status: 'FOUND', totalMin, legs }
+        : null,
+    busStop: busWalk != null ? { nameKr: '하차', walkMin: busWalk } : null,
+  };
 }
 
 /**
- * Load detail for the phone page:
- * 1) `?id=&lang=&from=` + optional `#z` route hash (v2) — preferred short QR
- * 2) legacy full payload in hash (v1)
+ * Preferred QR: `?id=&lang=&from=&r=` (+ photos via /api/shops/{id}).
+ * Still accepts legacy hash payloads.
  */
 export async function loadDetailFromLocation(
   loc: Location = window.location,
@@ -71,28 +134,33 @@ export async function loadDetailFromLocation(
   const from = q.get('from')?.trim() || 'eat';
   const hash = loc.hash.replace(/^#/, '').trim();
 
-  // Preferred: shop id query → fetch photos/text; hash = route only.
   if (Number.isFinite(id) && id > 0) {
-    let route: ShopRoute | null = null;
-    let showShuttle: boolean | undefined;
-    let showFerry: boolean | undefined;
-    let ferryModeLabel: string | undefined;
+    let route = parseRouteParam(q.get('r'));
+    let showShuttle = q.get('s') === '1' || undefined;
+    let showFerry = q.get('f') === '1' || undefined;
+    let ferryModeLabel = q.get('fl')?.trim() || undefined;
 
-    if (hash) {
+    // Legacy route-only hash (v2) if `r` query missing.
+    if (!route && hash) {
       const decoded = await decodeHashJson(hash);
-      if (isRouteHashV2(decoded)) {
-        route = decoded.r ?? null;
-        showShuttle = decoded.s || undefined;
-        showFerry = decoded.f || undefined;
-        ferryModeLabel = decoded.fl || undefined;
+      if (decoded && typeof decoded === 'object' && (decoded as { v?: number }).v === 2) {
+        const v2 = decoded as {
+          r?: ShopRoute | null;
+          s?: boolean;
+          f?: boolean;
+          fl?: string;
+        };
+        route = v2.r ?? null;
+        showShuttle = showShuttle || v2.s || undefined;
+        showFerry = showFerry || v2.f || undefined;
+        ferryModeLabel = ferryModeLabel || v2.fl || undefined;
       } else if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
-        // Old full payload accidentally opened with ?id= — still use its route.
         const legacy = normalizeLegacy(decoded as DetailPayload);
         if (legacy) {
           route = legacy.route ?? null;
-          showShuttle = legacy.showShuttle;
-          showFerry = legacy.showFerry;
-          ferryModeLabel = legacy.ferryModeLabel;
+          showShuttle = showShuttle || legacy.showShuttle;
+          showFerry = showFerry || legacy.showFerry;
+          ferryModeLabel = ferryModeLabel || legacy.ferryModeLabel;
         }
       }
     }
@@ -100,7 +168,6 @@ export async function loadDetailFromLocation(
     try {
       const shop = await fetchShopById(id);
       const fields = shopToDetailFields(shop, lang);
-      // Detail API returns route:null — prefer QR route; fall back to API if present.
       const apiRoute =
         shop.route && typeof shop.route.distanceKm === 'number' ? shop.route : null;
       return {
@@ -119,7 +186,6 @@ export async function loadDetailFromLocation(
     }
   }
 
-  // Legacy: full card in hash / ?d=
   if (hash) {
     const decoded = await decodeHashJson(hash);
     if (decoded && typeof decoded === 'object' && (decoded as DetailPayload).v === 1) {
@@ -152,28 +218,6 @@ export function demoPayload(): DetailPayload {
     description: '협재해수욕장 인근의 갈치 전문점.',
     tags: '#갈치도 #협재맛집',
     showShuttle: false,
-    route: {
-      distanceKm: 36.7,
-      durationMin: 56,
-      bikeMin: 120,
-      walkMin: 400,
-      transit: {
-        status: 'FOUND',
-        totalMin: 90,
-        basedOn: '2026-03',
-        legs: [
-          {
-            routeNum: '202',
-            boardStopNameKr: '제주국제공항',
-            rideStops: 20,
-            rideMin: 70,
-          },
-        ],
-      },
-      busStop: {
-        nameKr: '협재해수욕장',
-        walkMin: 8,
-      },
-    },
+    route: parseRouteParam('36.7,56,t52,3008,20,40,w3'),
   };
 }

@@ -2,26 +2,13 @@
 
 제주 키오스크 **흰 상세 카드**를 폰에서 보고 이미지로 저장하는 페이지.
 
-## QR URL (짧게)
+## QR URL (짧게 — 성긴 QR)
 
 ```
-https://{host}/?id={shopId}&lang=ko&from=eat#z{zlib(route-only)}
+https://{host}/?id=1612&lang=ko&from=eat&r=36.7,56,t52,3008,20,40,w3
 ```
 
-- 쿼리 `id` → 웹이 `GET /api/shops/{id}`로 **사진·이름·주소·전화** 조회 (Vercel/Vite `/api` 프록시)
-- 해시 → **가는 방법(route)** 만 (상세 API의 `route`는 null)
+- `id` → `GET /api/shops/{id}` 로 사진·이름·주소 (Vercel `/api` 프록시)
+- `r` → 가는 방법 압축 숫자열 (JSON/hash 없음 → QR 모듈이 큼)
 
-로컬 데모: `http://localhost:5174/?demo=1`  
-실데이터: `http://localhost:5174/?id=1612&lang=ko`
-
-## 개발
-
-```bash
-npm install
-npm run dev
-```
-
-## Vercel
-
-`vercel.json`이 `/api/*` → `api-stage-v3.witteria.com` 으로 프록시합니다.  
-키오스크 `.env`: `VITE_DETAIL_SAVE_ORIGIN=https://direction-fe.vercel.app`
+로컬: `npm run dev` → `http://localhost:5174/?id=1612&lang=ko&r=36.7,56`
