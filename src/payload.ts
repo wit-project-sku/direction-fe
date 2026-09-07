@@ -76,11 +76,14 @@ export function parseRouteParam(raw: string | null): ShopRoute | null {
   };
 }
 
-/** `?id=&lang=&from=&r=` → shop API + optional shop-route enrichment. */
+/** `?shopdirection&id=&lang=&from=&r=` → shop API + optional shop-route enrichment. */
 export async function loadDetailFromLocation(
   loc: Location = window.location,
 ): Promise<DetailPayload | null> {
   const q = new URLSearchParams(loc.search);
+  // Screen key — direction-fe will host other kiosk pages with different leading flags.
+  if (!q.has('shopdirection')) return null;
+
   const id = Number(q.get('id'));
   if (!Number.isFinite(id) || id <= 0) return null;
 
