@@ -1,0 +1,432 @@
+/* Phone rendering of Figma node 6760:18772 (제주>제주모하지(AI검색)-04-1).
+   The artboard is 2160x3840 — a kiosk panel — so it is mapped onto the phone
+   rather than guessed at:
+
+     --u    ONE ARTBOARD PIXEL. Every measurement below is the artboard's own
+            number times --u, so the layout is proportionally identical to the
+            frame at any width. Do not hand-tune these; change the frame value.
+
+     --type Type cannot follow --u literally: the artboard's 38px body copy
+            lands at 6.9px on a 390px phone. Text is therefore --u times this
+            one multiplier, which preserves the artboard's SIZE HIERARCHY while
+            lifting everything to a readable range. This is the only knob that
+            deviates from the frame — raise or lower it alone. */
+.page {
+  --primary: #ff7f0f;
+  --u: calc(min(100vw, 480px) / 2160);
+  --type: calc(var(--u) * 1.15);
+  position: relative;
+  min-height: 100dvh;
+  background: #fff;
+  color: #333;
+  font-family:
+    'Pretendard',
+    'Noto Sans KR',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  overflow-x: hidden;
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background: url('/ai-course/bg.jpg') center top / cover no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* The frame's 1820-wide column sits in 170px side margins; the phone trims
+   those to 120 so the card keeps enough width for the per-stop stat row. */
+.content {
+  position: relative;
+  width: min(100vw, 480px);
+  margin: 0 auto;
+  padding: calc(120 * var(--u)) calc(120 * var(--u))
+    calc(200 * var(--u) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── 서브타이틀 (6760:18779) ───────────────────────────── */
+.subtitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(60 * var(--u));
+}
+
+/* Star 4 is 34.2x32.6 in the frame — not square, so both axes are set. */
+.star {
+  flex: 0 0 auto;
+  width: calc(36 * var(--u));
+  height: calc(34 * var(--u));
+  display: block;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: calc(60 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  color: #616161;
+}
+
+/* ── 해시태그 (6760:18780) ─────────────────────────────── */
+.hashtags {
+  margin: calc(35 * var(--u)) 0 0;
+  text-align: center;
+  font-size: calc(45 * var(--type));
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--primary);
+}
+
+/* ── 코스 요약 바 (6760:18792) — h150, r75, four equal cells ── */
+.summary {
+  margin: calc(41 * var(--u)) 0 0;
+  min-height: calc(150 * var(--u));
+  padding: calc(12 * var(--u)) 0;
+  border-radius: calc(75 * var(--u));
+  background: var(--primary);
+  color: #fff;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+}
+
+.summaryCell {
+  position: relative;
+  padding: 0 calc(14 * var(--u));
+  text-align: center;
+  min-width: 0;
+}
+
+/* Lines 106/108, at the three quarter points. */
+.summaryCell + .summaryCell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(8 * var(--u));
+  bottom: calc(8 * var(--u));
+  width: 1px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.summaryLabel {
+  margin: 0;
+  /* 25px in the frame scales to 4.5px — floored, or the caption disappears. */
+  font-size: max(7px, calc(25 * var(--type)));
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+
+.summaryValue {
+  margin: calc(6 * var(--u)) 0 0;
+  font-size: calc(45 * var(--type));
+  font-weight: 600;
+  line-height: 1.2;
+  word-break: keep-all;
+}
+
+/* ── 검색 조건 칩 (6760:18957) — h120, r45, gap 32 ─────── */
+.filters {
+  margin-top: calc(36 * var(--u));
+  display: flex;
+  gap: calc(32 * var(--u));
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+/* The frame fits six fixed-width chips across; a phone scrolls them instead. */
+.filters::after {
+  content: '';
+  flex: 0 0 calc(20 * var(--u));
+}
+
+.filter {
+  flex: 0 0 auto;
+  min-height: calc(120 * var(--u));
+  padding: 0 calc(50 * var(--u));
+  border-radius: calc(45 * var(--u));
+  background: #fff;
+  color: var(--primary);
+  font-size: calc(45 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* ── DAY 라벨 + 전체보기/선택보기 (6760:18971 · 6858:69231) ── */
+.dayRow {
+  margin-top: calc(53 * var(--u));
+  min-height: calc(120 * var(--u));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(32 * var(--u));
+}
+
+.dayLabel {
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  font-size: calc(68 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  color: #616161;
+}
+
+.viewBtns {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  gap: calc(34 * var(--u));
+}
+
+.viewBtn {
+  appearance: none;
+  border: none;
+  min-height: calc(120 * var(--u));
+  padding: 0 calc(40 * var(--u));
+  border-radius: calc(45 * var(--u));
+  background: #fff;
+  color: #999;
+  font-family: inherit;
+  font-size: calc(45 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.viewBtn:active {
+  color: var(--primary);
+}
+
+/* ── 코스 타임라인 (6760:18781 · 6760:18803) ───────────── */
+.timeline {
+  list-style: none;
+  margin: calc(47 * var(--u)) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(50 * var(--u));
+}
+
+.spot {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Frame: disc at x170 (size 105), card starts at x310 — so the column is the
+   disc PLUS a 35px gap, and the disc is left-aligned inside it. Sizing this
+   column to the disc alone is what jams the number against the card. */
+.marker {
+  position: relative;
+  flex: 0 0 calc(140 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Line 105: the dashed rail, centred on the disc. It bleeds into the row gap
+   and stops at the first and last disc, as the frame draws it. */
+.marker::before {
+  content: '';
+  position: absolute;
+  top: calc(-25 * var(--u));
+  bottom: calc(-25 * var(--u));
+  left: calc(52.5 * var(--u));
+  border-left: 2px dashed var(--primary);
+}
+
+.spot:first-child .marker::before {
+  top: 50%;
+}
+
+.spot:last-child .marker::before {
+  bottom: 50%;
+}
+
+.stepNo {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(105 * var(--u));
+  height: calc(105 * var(--u));
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: calc(65 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 장소 카드 (6760:18804) — w1678, r40, pad 65/80/51/74 ── */
+.card {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #fff;
+  border-radius: calc(40 * var(--u));
+  padding: calc(65 * var(--u)) calc(80 * var(--u)) calc(51 * var(--u)) calc(74 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(51 * var(--u));
+}
+
+.thumb {
+  flex: 0 0 calc(620 * var(--u));
+  width: calc(620 * var(--u));
+  height: calc(399 * var(--u));
+  border-radius: calc(42.9 * var(--u));
+  overflow: hidden;
+  background: #eee;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(26 * var(--u));
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(20 * var(--u));
+}
+
+.name {
+  margin: 0;
+  min-width: 0;
+  font-size: calc(68 * var(--type));
+  font-weight: 700;
+  line-height: 1.15;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotTag {
+  flex: 0 0 auto;
+  font-size: calc(52 * var(--type));
+  font-weight: 700;
+  line-height: 1;
+  color: #999;
+}
+
+.addrRow {
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--u));
+  min-width: 0;
+}
+
+.markerIcon {
+  flex: 0 0 auto;
+  width: calc(51 * var(--u));
+  height: calc(51 * var(--u));
+  display: block;
+}
+
+.addr {
+  margin: 0;
+  min-width: 0;
+  font-size: max(8.5px, calc(38 * var(--type)));
+  font-weight: 700;
+  line-height: 1.2;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two lines in the frame; the same copy needs three at phone width, so clamp
+   there rather than cutting the sentence short. */
+.desc {
+  margin: 0;
+  font-size: max(8.5px, calc(38 * var(--type)));
+  font-weight: 700;
+  line-height: 1.3;
+  color: #999;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Frame keeps both stats on one line in an 875px column. At phone width the
+   labelled forms ("머무는 시간 : 2-3시간") do not both fit, so they wrap. */
+.metaRow {
+  margin-top: calc(20 * var(--u));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: calc(40 * var(--u));
+  row-gap: calc(20 * var(--u));
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--u));
+}
+
+.clockIcon {
+  flex: 0 0 auto;
+  width: calc(58 * var(--u));
+  height: calc(58 * var(--u));
+  display: block;
+}
+
+/* Group 1707482771 is 34x41 in the frame — kept off-square so it is not squashed. */
+.levelIcon {
+  flex: 0 0 auto;
+  width: calc(48 * var(--u));
+  height: calc(58 * var(--u));
+  display: block;
+}
+
+.metaText {
+  margin: 0;
+  font-size: max(8.5px, calc(38 * var(--type)));
+  font-weight: 700;
+  line-height: 1;
+  color: #333;
+  white-space: nowrap;
+}
+
+.status {
+  margin: 48px 16px;
+  text-align: center;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.demoLink {
+  color: var(--primary);
+  font-weight: 600;
+}
