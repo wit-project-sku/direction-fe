@@ -1,20 +1,13 @@
-/* Phone rendering of Figma node 6760:18772 (제주>제주모하지(AI검색)-04-1).
-   The artboard is 2160x3840 — a kiosk panel — so it is mapped onto the phone
-   rather than guessed at:
-
-     --u    ONE ARTBOARD PIXEL. Every measurement below is the artboard's own
-            number times --u, so the layout is proportionally identical to the
-            frame at any width. Do not hand-tune these; change the frame value.
-
-     --type Type cannot follow --u literally: the artboard's 38px body copy
-            lands at 6.9px on a 390px phone. Text is therefore --u times this
-            one multiplier, which preserves the artboard's SIZE HIERARCHY while
-            lifting everything to a readable range. This is the only knob that
-            deviates from the frame — raise or lower it alone. */
+/* Phone rendering of the kiosk AI course result page (Figma 7058:21462 ·
+   7058:22277), header omitted. The kiosk artboard is a 2160×3840 panel; the
+   phone keeps its palette, its order and its shapes — orange summary bar, DAY
+   tabs on a white sheet, numbered discs on a dashed rail, leg pills, white cards
+   with the kiosk's soft drop — but sizes them for a hand, in px, on a column that
+   stops growing at 480. */
 .page {
   --primary: #ff7f0f;
-  --u: calc(min(100vw, 480px) / 2160);
-  --type: calc(var(--u) * 1.15);
+  --primary-soft: #ffeac7;
+  --gray: #616161;
   position: relative;
   min-height: 100dvh;
   background: #fff;
@@ -36,103 +29,103 @@
   pointer-events: none;
 }
 
-/* The frame's 1820-wide column sits in 170px side margins; the phone trims
-   those to 120 so the card keeps enough width for the per-stop stat row. */
 .content {
   position: relative;
   width: min(100vw, 480px);
   margin: 0 auto;
-  padding: calc(120 * var(--u)) calc(120 * var(--u))
-    calc(200 * var(--u) + env(safe-area-inset-bottom, 0px));
+  padding: 22px 16px calc(28px + env(safe-area-inset-bottom, 0px));
 }
 
-/* ── 서브타이틀 (6760:18779) ───────────────────────────── */
+/* ── 서브타이틀 · 해시태그 ── */
+.header {
+  text-align: center;
+}
+
 .subtitleRow {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(60 * var(--u));
+  gap: 8px;
 }
 
-/* Star 4 is 34.2x32.6 in the frame — not square, so both axes are set. */
+/* Star 4 is 34.2 × 32.6 — both axes set so it is not squashed. */
 .star {
-  flex: 0 0 auto;
-  width: calc(36 * var(--u));
-  height: calc(34 * var(--u));
+  flex: none;
+  width: 13px;
+  height: 12.4px;
   display: block;
 }
 
 .subtitle {
   margin: 0;
-  font-size: calc(60 * var(--type));
+  font-size: 19px;
   font-weight: 700;
-  line-height: 1;
-  color: #616161;
+  line-height: 1.3;
+  color: var(--gray);
+  word-break: keep-all;
 }
 
-/* ── 해시태그 (6760:18780) ─────────────────────────────── */
 .hashtags {
-  margin: calc(35 * var(--u)) 0 0;
-  text-align: center;
-  font-size: calc(45 * var(--type));
+  margin: 6px 0 0;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
   color: var(--primary);
 }
 
-/* ── 코스 요약 바 (6760:18792) — h150, r75, four equal cells ── */
+/* ── 요약 바 — 총 소요시간 · 이동시간 · 방문 인원/일정 · 이동수단 ── */
 .summary {
-  margin: calc(41 * var(--u)) 0 0;
-  min-height: calc(150 * var(--u));
-  padding: calc(12 * var(--u)) 0;
-  border-radius: calc(75 * var(--u));
+  margin-top: 16px;
+  min-height: 60px;
+  padding: 10px 4px;
+  border-radius: 30px;
   background: var(--primary);
   color: #fff;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
 }
 
 .summaryCell {
   position: relative;
-  padding: 0 calc(14 * var(--u));
-  text-align: center;
   min-width: 0;
+  padding: 0 4px;
+  text-align: center;
 }
 
-/* Lines 106/108, at the three quarter points. */
 .summaryCell + .summaryCell::before {
   content: '';
   position: absolute;
   left: 0;
-  top: calc(8 * var(--u));
-  bottom: calc(8 * var(--u));
+  top: 2px;
+  bottom: 2px;
   width: 1px;
-  background: rgba(255, 255, 255, 0.45);
+  background: #fff;
 }
 
 .summaryLabel {
   margin: 0;
-  /* 25px in the frame scales to 4.5px — floored, or the caption disappears. */
-  font-size: max(7px, calc(25 * var(--type)));
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.3;
   word-break: keep-all;
 }
 
 .summaryValue {
-  margin: calc(6 * var(--u)) 0 0;
-  font-size: calc(45 * var(--type));
+  margin: 2px 0 0;
+  font-size: 13.5px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-/* ── 검색 조건 칩 (6760:18957) — h120, r45, gap 32 ─────── */
+/* ── 즐길 거리 칩 (커스텀 코스) — scrolls sideways past the column ── */
 .filters {
-  margin-top: calc(36 * var(--u));
+  margin: 14px -16px 0;
+  padding: 0 16px;
   display: flex;
-  gap: calc(32 * var(--u));
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -142,130 +135,138 @@
   display: none;
 }
 
-/* The frame fits six fixed-width chips across; a phone scrolls them instead. */
-.filters::after {
-  content: '';
-  flex: 0 0 calc(20 * var(--u));
-}
-
 .filter {
-  flex: 0 0 auto;
-  min-height: calc(120 * var(--u));
-  padding: 0 calc(50 * var(--u));
-  border-radius: calc(45 * var(--u));
+  flex: none;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 14px;
   background: #fff;
   color: var(--primary);
-  font-size: calc(45 * var(--type));
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   white-space: nowrap;
 }
 
-/* ── DAY 라벨 + 전체보기/선택보기 (6760:18971 · 6858:69231) ── */
-.dayRow {
-  margin-top: calc(53 * var(--u));
-  min-height: calc(120 * var(--u));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: calc(32 * var(--u));
-}
-
-.dayLabel {
-  grid-column: 2;
-  min-width: 0;
-  margin: 0;
-  text-align: center;
-  font-size: calc(68 * var(--type));
-  font-weight: 700;
-  line-height: 1;
-  color: #616161;
-}
-
-.viewBtns {
-  grid-column: 3;
-  justify-self: end;
+/* ── DAY 탭 — the day in view is a white tab that runs into the sheet ── */
+.tabs {
+  margin-top: 18px;
+  height: 46px;
   display: flex;
-  gap: calc(34 * var(--u));
+  align-items: flex-end;
 }
 
-.viewBtn {
-  appearance: none;
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 46px;
+  padding: 0;
   border: none;
-  min-height: calc(120 * var(--u));
-  padding: 0 calc(40 * var(--u));
-  border-radius: calc(45 * var(--u));
-  background: #fff;
-  color: #999;
+  border-radius: 16px 16px 0 0;
+  background: none;
   font-family: inherit;
-  font-size: calc(45 * var(--type));
+  font-size: 16px;
   font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+  color: #999;
   cursor: pointer;
 }
 
-.viewBtn:active {
+.tabOn {
+  background: #fff;
   color: var(--primary);
 }
 
-/* ── 코스 타임라인 (6760:18781 · 6760:18803) ───────────── */
+.sheet {
+  position: relative;
+  min-height: 55dvh;
+  padding: 18px 12px 24px;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.sheetSquareLeft {
+  border-top-left-radius: 0;
+}
+
+.sheetSquareRight {
+  border-top-right-radius: 0;
+}
+
+/* DAY 1's start point — discless, above the rail. */
+.startPlate {
+  margin-bottom: 18px;
+  padding: 16px 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    2px 4px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #000;
+  word-break: keep-all;
+}
+
+/* ── 타임라인 — disc column + card, with a leg row between two stops ── */
 .timeline {
   list-style: none;
-  margin: calc(47 * var(--u)) 0 0;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: calc(50 * var(--u));
 }
 
-.spot {
-  display: flex;
-  align-items: stretch;
+.stopRow,
+.legRow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 8px;
 }
 
-/* Frame: disc at x170 (size 105), card starts at x310 — so the column is the
-   disc PLUS a 35px gap, and the disc is left-aligned inside it. Sizing this
-   column to the disc alone is what jams the number against the card. */
-.marker {
+.legRow {
+  min-height: 16px;
+}
+
+.rail {
   position: relative;
-  flex: 0 0 calc(140 * var(--u));
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
-/* Line 105: the dashed rail, centred on the disc. It bleeds into the row gap
-   and stops at the first and last disc, as the frame draws it. */
-.marker::before {
+/* The dashed rail runs through every row and stops at the first and last disc. */
+.rail::before {
   content: '';
   position: absolute;
-  top: calc(-25 * var(--u));
-  bottom: calc(-25 * var(--u));
-  left: calc(52.5 * var(--u));
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
   border-left: 2px dashed var(--primary);
 }
 
-.spot:first-child .marker::before {
+.stopFirst > .rail::before {
   top: 50%;
 }
 
-.spot:last-child .marker::before {
+.stopLast > .rail::before {
   bottom: 50%;
 }
 
-.stepNo {
+.stopFirst.stopLast > .rail::before {
+  display: none;
+}
+
+.disc {
   position: relative;
-  flex: 0 0 auto;
-  width: calc(105 * var(--u));
-  height: calc(105 * var(--u));
+  z-index: 1;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
-  font-size: calc(65 * var(--type));
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   display: flex;
@@ -273,149 +274,191 @@
   justify-content: center;
 }
 
-/* ── 장소 카드 (6760:18804) — w1678, r40, pad 65/80/51/74 ── */
-.card {
-  flex: 1 1 auto;
-  min-width: 0;
+/* "15분" over "1.1km" — the kiosk's leg pill, centred on the rail. */
+.leg {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0;
+  padding: 4px 7px;
+  border-radius: 10px;
   background: #fff;
-  border-radius: calc(40 * var(--u));
-  padding: calc(65 * var(--u)) calc(80 * var(--u)) calc(51 * var(--u)) calc(74 * var(--u));
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.14);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: calc(51 * var(--u));
 }
 
-.thumb {
-  flex: 0 0 calc(620 * var(--u));
-  width: calc(620 * var(--u));
-  height: calc(399 * var(--u));
-  border-radius: calc(42.9 * var(--u));
+/* ── 장소 카드 — photo on top at the kiosk plate's 410:263, text below ── */
+.card {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    2px 4px 6px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  background: #eee;
+  display: flex;
+  flex-direction: column;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
 }
 
-.thumb img {
+.card:active {
+  transform: scale(0.985);
+}
+
+.photo {
+  aspect-ratio: 410 / 263;
+  background: #f2ede6;
+}
+
+.photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.body {
-  flex: 1 1 auto;
+.cardBody {
   min-width: 0;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: calc(26 * var(--u));
+  gap: 6px;
 }
 
 .nameRow {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: calc(20 * var(--u));
+  gap: 8px;
 }
 
 .name {
   margin: 0;
   min-width: 0;
-  font-size: calc(68 * var(--type));
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.25;
   color: #000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-.spotTag {
-  flex: 0 0 auto;
-  font-size: calc(52 * var(--type));
+.tag {
+  flex: none;
+  max-width: 45%;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1;
   color: #999;
-}
-
-.addrRow {
-  display: flex;
-  align-items: center;
-  gap: calc(20 * var(--u));
-  min-width: 0;
-}
-
-.markerIcon {
-  flex: 0 0 auto;
-  width: calc(51 * var(--u));
-  height: calc(51 * var(--u));
-  display: block;
-}
-
-.addr {
-  margin: 0;
-  min-width: 0;
-  font-size: max(8.5px, calc(38 * var(--type)));
-  font-weight: 700;
-  line-height: 1.2;
-  color: #333;
+  text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Two lines in the frame; the same copy needs three at phone width, so clamp
-   there rather than cutting the sentence short. */
 .desc {
   margin: 0;
-  font-size: max(8.5px, calc(38 * var(--type)));
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
   color: #999;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 
-/* Frame keeps both stats on one line in an 875px column. At phone width the
-   labelled forms ("머무는 시간 : 2-3시간") do not both fit, so they wrap. */
+.infoRow {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  display: block;
+  object-fit: contain;
+}
+
+/* The bars glyph is cropped to its 34×41 ink — inset so it matches the clock. */
+.iconBars {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  padding: 2px;
+  box-sizing: border-box;
+  display: block;
+  object-fit: contain;
+}
+
+.infoText {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hours give way first — they are free text — so 머무는 시간 always reads whole. */
 .metaRow {
-  margin-top: calc(20 * var(--u));
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: calc(40 * var(--u));
-  row-gap: calc(20 * var(--u));
-}
-
-.meta {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: calc(20 * var(--u));
+  gap: 12px;
 }
 
-.clockIcon {
-  flex: 0 0 auto;
-  width: calc(58 * var(--u));
-  height: calc(58 * var(--u));
-  display: block;
+.metaItem {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-/* Group 1707482771 is 34x41 in the frame — kept off-square so it is not squashed. */
-.levelIcon {
-  flex: 0 0 auto;
-  width: calc(48 * var(--u));
-  height: calc(58 * var(--u));
-  display: block;
+.metaHours {
+  flex: 0 1 auto;
+}
+
+.metaDwell {
+  flex: none;
 }
 
 .metaText {
-  margin: 0;
-  font-size: max(8.5px, calc(38 * var(--type)));
+  min-width: 0;
+  font-size: 12.5px;
   font-weight: 700;
-  line-height: 1;
   color: #333;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more {
+  align-self: flex-end;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
 }
 
 .status {

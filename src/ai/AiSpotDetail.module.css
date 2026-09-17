@@ -1,0 +1,280 @@
+/* The stop detail — same page frame as the course (AiCoursePage.module.css
+   .page / .bg / .content), with the kiosk palette. */
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -22px -16px 0;
+  padding: 12px 16px;
+  background: rgba(255, 247, 238, 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.back {
+  appearance: none;
+  padding: 8px 14px 8px 11px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.position {
+  margin: 16px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.titleRow {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #000;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.category {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Swipeable photos; one photo takes the whole width. */
+.gallery {
+  margin: 14px -16px 0;
+  padding: 0 16px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gallery::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 86%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f2ede6;
+  scroll-snap-align: center;
+}
+
+.slideOnly {
+  flex-basis: 100%;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.panel {
+  margin-top: 12px;
+  padding: 16px 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    2px 4px 6px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: 18px 68px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  display: block;
+  object-fit: contain;
+}
+
+.iconBars {
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.infoLabel {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #999;
+}
+
+.infoValue {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #333;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.tel {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #555;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+
+.hashtags {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ── 길찾기 ── */
+.navTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #000;
+}
+
+.navLeg {
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: #fff4e8;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--primary);
+  word-break: keep-all;
+}
+
+.navNote {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #777;
+  word-break: keep-all;
+}
+
+.navBtns {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.navBtn {
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.navBtn:active {
+  opacity: 0.85;
+}
+
+.kakao {
+  background: #fee500;
+  color: #191919;
+}
+
+.naver {
+  background: #03c75a;
+  color: #fff;
+}
+
+.google {
+  background: #fff;
+  color: #1f1f1f;
+  box-shadow: inset 0 0 0 1.5px #dadce0;
+}
+
+/* ── 이전 / 다음 장소 ── */
+.stepper {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stepBtn {
+  appearance: none;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stepNext {
+  grid-column: 2;
+  text-align: right;
+}
+
+.stepLabel {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stepName {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
